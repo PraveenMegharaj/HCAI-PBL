@@ -38,10 +38,9 @@
         <h2 style="text-align: center;">Projects</h2>
         <div class="button-container">
             {% for project in projects %}
-                <form action="{% url project.url_name %}" method="get" style="margin-bottom: 10px;">
-                    {% csrf_token %}
+                <a href="{% url project.url_name %}">
                     <button type="submit">{{ project.name }}</button>
-                </form>
+                </a>
             {% endfor %}
         </div>
     </div>
