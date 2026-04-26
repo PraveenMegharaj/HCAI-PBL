@@ -3,4 +3,122 @@
 {% block content %}
 <h1>Project 1: Supervised Learning Interface</h1>
 <p>Coming soon...</p>
+{% endblock %}*File 2 — templates/project1/index.html*
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 30px auto; padding: 0 20px;">
+
+    <h1 style="text-align:center;">Project 1: Supervised Learning Interface</h1>
+    <h2 style="text-align:center; color:gray;">Step 1: Upload & Visualize Data</h2>
+
+    <!-- Upload Form -->
+    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div style="margin-bottom:15px;">
+                <label><strong>Upload CSV File:</strong></label><br>
+                <input type="file" name="csv_file" accept=".csv" required
+                       style="margin-top:8px;">
+            </div>
+
+            <div style="margin-bottom:15px;">
+                <label><strong>Problem Type:</strong></label><br>
+                <select name="problem_type" style="margin-top:8px; padding:5px;">
+                    <option value="auto">Auto Detect</option>
+                    <option value="classification">Classification</option>
+                    <option value="regression">Regression</option>
+                </select>
+            </div>
+
+            <button type="submit"
+                    style="background:steelblue; color:white; padding:10px 25px;
+                           border:none; border-radius:5px; cursor:pointer;">
+                Upload & Visualize
+            </button>
+        </form>
+    </div>
+
+    <!-- Error -->
+    {% if error %}
+        <div style="background:#ffe0e0; padding:15px; border-radius:8px; color:red;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- Results -->
+    {% if success %}
+
+        <!-- Dataset Info -->
+        <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-bottom:25px;">
+            <h3>Dataset Info</h3>
+            <p><strong>Samples:</strong> {{ n_samples }} &nbsp;|&nbsp;
+               <strong>Features:</strong> {{ n_features }} &nbsp;|&nbsp;
+               <strong>Target column:</strong> {{ target_col }} &nbsp;|&nbsp;
+               <strong>Problem type:</strong> 
+               <span style="color:steelblue;">{{ problem_type }}</span>
+            </p>
+        </div>
+
+        <!-- Data Preview -->
+        <div style="margin-bottom:30px;">
+            <h3>Data Preview (first 10 rows)</h3>
+            <div style="overflow-x:auto;">
+                {{ table_html|safe }}
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div style="margin-bottom:30px;">
+            <h3>Dataset Statistics</h3>
+            <div style="overflow-x:auto;">
+                {{ stats_html|safe }}
+            </div>
+        </div>
+
+        <!-- Histograms -->
+        <div style="margin-bottom:30px;">
+            <h3>Feature Distributions</h3>
+            <img src="{{ hist_url }}" style="max-width:100%; border-radius:8px;">
+        </div>
+
+        <!-- Scatter Plot -->
+        <div style="margin-bottom:30px;">
+            <h3>Scatter Plot</h3>
+            <img src="{{ scatter_url }}" style="max-width:600px; border-radius:8px;">
+        </div>
+
+        <!-- Heatmap -->
+        <div style="margin-bottom:30px;">
+            <h3>Correlation Heatmap</h3>
+            <img src="{{ heatmap_url }}" style="max-width:700px; border-radius:8px;">
+        </div>
+
+    {% endif %}
+
+</div>
+
+<style>
+.data-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+}
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    text-align: left;
+}
+.data-table th {
+    background: steelblue;
+    color: white;
+}
+.data-table tr:nth-child(even) {
+    background: #f2f2f2;
+}
+</style>
+
 {% endblock %}
