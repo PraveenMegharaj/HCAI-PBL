@@ -89,6 +89,137 @@
     </div>
     {% endif %}
 
+    <!-- ───── COUNTERFACTUAL SECTION ───── -->
+    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
+        <h2>Task 4: Counterfactual Explanations</h2>
+        <p style="color:gray;">
+            Select a data point and a target class to see what minimal
+            changes would lead to a different prediction.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="model_type" value="{{ model_type }}">
+            <input type="hidden" name="lam"        value="{{ lam }}">
+            <input type="hidden" name="action"     value="counterfactual">
+
+            <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:15px;">
+
+                <div>
+                    <label><strong>Select Data Point (index):</strong></label><br>
+                    <select name="selected_idx" style="padding:5px; margin-top:8px;">
+                        {% for i in data_indices %}
+                            <option value="{{ i }}"
+                                {% if i == selected_idx %}selected{% endif %}>
+                                #{{ i }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label><strong>Target Class:</strong></label><br>
+                    <select name="target_class" style="padding:5px; margin-top:8px;">
+                        <option value="0">{{ class_names.0 }}</option>
+                        <option value="1">{{ class_names.1 }}</option>
+                        <option value="2">{{ class_names.2 }}</option>
+                </select>
+            </div>
+
+            </div>
+            <button type="submit"
+                style="background:#2e8b57; color:white; padding:10px 25px;
+                    border:none; border-radius:5px; cursor:pointer;">
+                Generate Counterfactuals
+            </button>
+        </form>
+    </div>
+
+    {% if cf_error %}
+    <div style="background:#ffe0e0; padding:15px; border-radius:8px;
+                color:red; margin-bottom:20px;">
+        {{ cf_error }}
+    </div>
+    {% endif %}
+
+    {% if cf_table %}
+    <div style="margin-bottom:30px;">
+        <h3>Counterfactual Results</h3>
+        <p>
+            <strong>Original class:</strong>
+            <span style="color:steelblue;">{{ original_class_name }}</span>
+            &nbsp;&rarr;&nbsp;
+            <strong>Target class:</strong>
+            <span style="color:green;">{{ target_class_name }}</span>
+        </p>
+        <h4>Original Data Point:</h4>
+        <div style="overflow-x:auto;">{{ orig_table|safe }}</div>
+        <h4 style="margin-top:20px;">
+            Top 5 Counterfactuals (ranked by MAD-weighted L1 distance):
+        </h4>
+        <div style="overflow-x:auto;">{{ cf_table|safe }}</div>
+    </div>
+    {% endif %}
+
+
+    <!-- ───── FEATURE EFFECT PLOTS ───── -->
+    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
+        <h2>Task 5: Feature Effect Plots</h2>
+        <p style="color:gray;">
+            Select a numerical feature to view its PDP and ALE plots.
+            Results are linked to the currently selected model and lambda.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="model_type" value="{{ model_type }}">
+            <input type="hidden" name="lam"        value="{{ lam }}">
+            <input type="hidden" name="action"     value="feature_effect">
+
+            <div style="margin-bottom:15px;">
+                <label><strong>Select Feature:</strong></label><br>
+                <select name="selected_feature"
+                        style="padding:5px; margin-top:8px;">
+                    {% for feat in numerical_features %}
+                        <option value="{{ feat }}"
+                            {% if feat == selected_feature %}selected{% endif %}>
+                            {{ feat }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit"
+                style="background:#8b2e8b; color:white; padding:10px 25px;
+                       border:none; border-radius:5px; cursor:pointer;">
+                Generate Plots
+            </button>
+        </form>
+    </div>
+
+    {% if feature_effect_done %}
+    <div style="margin-bottom:30px;">
+        <h3>PDP — {{ selected_feature }}</h3>
+        <p style="color:gray; font-size:0.9em;">
+            Shows the average predicted probability of each species
+            as the selected feature varies, marginalised over all other features.
+        </p>
+        <img src="{{ pdp_url }}"
+            style="max-width:700px; border-radius:8px;">
+    </div>
+
+    <div style="margin-bottom:30px;">
+        <h3>ALE — {{ selected_feature }}</h3>
+        <p style="color:gray; font-size:0.9em;">
+            Shows accumulated local effects of the feature on each species
+            probability. More reliable than PDP when features are correlated.
+        </p>
+        <img src="{{ ale_url }}"
+            style="max-width:700px; border-radius:8px;">
+    </div>
+    {% endif %}
+
+
 </div>
 
 <style>
