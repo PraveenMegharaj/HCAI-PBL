@@ -74,9 +74,6 @@ def index(request):
     if request.method == 'POST':
         action = request.POST.get('action', 'upload')
 
-        # ─────────────────────────────────────────
-        # ACTION 1: Upload & Visualize
-        # ─────────────────────────────────────────
         if action == 'upload':
             csv_file = request.FILES.get('csv_file')
             problem_type_override = request.POST.get('problem_type', 'auto')
@@ -163,9 +160,6 @@ def index(request):
             else:
                 context['error'] = "Please upload a valid CSV file."
 
-        # ─────────────────────────────────────────
-        # ACTION 2: Train Model
-        # ─────────────────────────────────────────
         elif action == 'train':
             csv_filename = request.POST.get('csv_filename')
             problem_type = request.POST.get('problem_type')
@@ -195,7 +189,7 @@ def index(request):
             )
 
             # Get model config
-            models_config = get_models(problem_type)
+            models_config = get_models(problem_type) 
             model_config = models_config[model_name]
             ModelClass = model_config['model']
             param_name = model_config['param']

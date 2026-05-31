@@ -6,7 +6,7 @@
 
     <h1 style="text-align:center;">Project 1: Supervised Learning Interface</h1>
 
-    <!-- ───── UPLOAD FORM ───── -->
+    <!--Upload Form-->
     <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
         <h2>Step 1: Upload Dataset</h2>
         <form method="post" enctype="multipart/form-data">
@@ -35,14 +35,14 @@
         </form>
     </div>
 
-    <!-- ───── ERROR ───── -->
+    <!-- error -->
     {% if error %}
     <div style="background:#ffe0e0; padding:15px; border-radius:8px; color:red; margin-bottom:20px;">
         {{ error }}
     </div>
     {% endif %}
 
-    <!-- ───── VISUALIZATION RESULTS ───── -->
+    <!-- Results of Visualization -->
     {% if success %}
 
     <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-bottom:25px;">
@@ -81,7 +81,7 @@
         <img src="{{ heatmap_url }}" style="max-width:700px; border-radius:8px;">
     </div>
 
-    <!-- ───── TRAINING FORM ───── -->
+    <!-- Training Form -->
     <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
         <h2>Step 2: Train a Model</h2>
         <form method="post">
@@ -132,7 +132,7 @@
     </div>
     {% endif %}
 
-    <!-- ───── TRAINING RESULTS ───── -->
+    <!--Training Results-->
     {% if train_success %}
     <div style="background:#e8f8e8; padding:15px; border-radius:8px; margin-bottom:25px;">
         <h3>Training Results — {{ model_name }}</h3>

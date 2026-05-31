@@ -1,6 +1,98 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<h1>Project 2</h1>
-<p>Coming soon...</p>
+<div style="max-width:1200px; margin:30px auto; padding:0 20px;">
+
+    <h1 style="text-align:center;">Project 2: Explainability</h1>
+    <h2 style="text-align:center; color:gray;">Palmer Penguins Dataset</h2>
+
+    <!-- ───── CONTROL PANEL ───── -->
+    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
+        <h2>Controls</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Model Type -->
+            <div style="margin-bottom:15px;">
+                <label><strong>Model Type:</strong></label><br>
+                <select name="model_type" style="padding:5px; margin-top:8px;"
+                        onchange="this.form.submit()">
+                    <option value="tree"
+                        {% if model_type == 'tree' %}selected{% endif %}>
+                        Decision Tree
+                    </option>
+                    <option value="logistic"
+                        {% if model_type == 'logistic' %}selected{% endif %}>
+                        Logistic Regression
+                    </option>
+                </select>
+            </div>
+
+            <!-- Lambda Slider -->
+            <div style="margin-bottom:15px;">
+                <label>
+                    <strong>λ (Regularization penalty):</strong>
+                    <span id="lam_val">{{ lam }}</span>
+                </label><br>
+                <input type="range" name="lam"
+                       min="0" max="0.1" step="0.001"
+                       value="{{ lam }}"
+                       style="width:400px; margin-top:8px;"
+                       oninput="document.getElementById('lam_val').textContent=this.value">
+            </div>
+
+            <button type="submit"
+                style="background:steelblue; color:white; padding:10px 25px;
+                       border:none; border-radius:5px; cursor:pointer;">
+                Update Model
+            </button>
+        </form>
+    </div>
+
+    <!-- ───── MODEL RESULTS ───── -->
+    <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-bottom:25px;">
+        <h3>Model Results</h3>
+        {% if model_type == 'tree' %}
+        <p>
+            <strong>Test Accuracy:</strong> {{ accuracy }} &nbsp;|&nbsp;
+            <strong>Number of Leaves:</strong> {{ n_leaves }} &nbsp;|&nbsp;
+            <strong>Objective Score (acc - λ×leaves):</strong> {{ best_score }}
+        </p>
+        {% else %}
+        <p>
+            <strong>Test Accuracy:</strong> {{ accuracy }} &nbsp;|&nbsp;
+            <strong>Non-zero Coefficients:</strong> {{ nonzero }} &nbsp;|&nbsp;
+            <strong>Best C:</strong> {{ best_C }} &nbsp;|&nbsp;
+            <strong>Objective Score:</strong> {{ best_score }}
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- ───── ACCURACY PLOT ───── -->
+    {% if acc_plot_url %}
+    <div style="margin-bottom:30px;">
+        <h3>Accuracy vs Complexity</h3>
+        <img src="{{ acc_plot_url }}"
+             style="max-width:800px; border-radius:8px;">
+    </div>
+    {% endif %}
+
+    <!-- ───── TREE VISUALISATION ───── -->
+    {% if tree_url %}
+    <div style="margin-bottom:30px;">
+        <h3>Decision Tree Visualisation</h3>
+        <div style="overflow-x:auto;">
+            <img src="{{ tree_url }}"
+                 style="max-width:100%; border-radius:8px;">
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<style>
+input[type=range] { cursor: pointer; }
+</style>
+
 {% endblock %}
