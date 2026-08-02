@@ -315,43 +315,45 @@ def index(request):
         ax.grid(True, alpha=0.3)
         context['acc_plot_url'] = save_plot(fig, f'acc_lr_{uid}.png')
 
-        df_full = load_penguins().dropna().reset_index(drop=True)
-        numerical_cols = ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']
-        display_cols = ['species'] + numerical_cols
-        context['data_points'] = df_full[display_cols].head(50).to_dict('records')
-        context['data_indices'] = list(range(min(50, len(df_full))))
-        context['class_names']  = class_names
+    # -----------------------------------------------------------------
+    # COUNTERFACTUALS (Task 4) — available for both model types
+    # -----------------------------------------------------------------
+    df_full = load_penguins().dropna().reset_index(drop=True)
+    numerical_cols = ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']
+    display_cols = ['species'] + numerical_cols
+    context['data_points'] = df_full[display_cols].head(50).to_dict('records')
+    context['data_indices'] = list(range(min(50, len(df_full))))
 
-        selected_idx = int(request.POST.get('selected_idx', 0))
-        target_class = request.POST.get('target_class', None)
-        context['selected_idx'] = selected_idx
+    selected_idx = int(request.POST.get('selected_idx', 0))
+    target_class = request.POST.get('target_class', None)
+    context['selected_idx'] = selected_idx
 
-        if target_class is not None and request.POST.get('action') == 'counterfactual':
-            target_class = int(target_class)
-            x = X.iloc[selected_idx]
-            active_model = best_tree if model_type == 'tree' else best_lr
+    if target_class is not None and request.POST.get('action') == 'counterfactual':
+        target_class = int(target_class)
+        x = X.iloc[selected_idx]
+        active_model = best_tree if model_type == 'tree' else best_lr
 
-            result = generate_counterfactuals(x, target_class, active_model, X, N=10000, k=5)
+        result = generate_counterfactuals(x, target_class, active_model, X, N=10000, k=5)
 
-            if result is None:
-                context['cf_error'] = (
-                    "No counterfactuals found. "
-                    "Try a different point or target class."
-                )
-            else:
-                cf_df, original_df = result
-                context['cf_table'] = cf_df.round(3).to_html(
-                    classes='data-table', index=False
-                )
-                context['orig_table'] = original_df.round(3).to_html(
-                    classes='data-table', index=False
-                )
-                context['target_class_name']   = class_names[target_class]
-                context['original_class_name'] = class_names[
-                    active_model.predict([x])[0]
-                ]
+        if result is None:
+            context['cf_error'] = (
+                "No counterfactuals found. "
+                "Try a different point or target class."
+            )
+        else:
+            cf_df, original_df = result
+            context['cf_table'] = cf_df.round(3).to_html(
+                classes='data-table', index=False
+            )
+            context['orig_table'] = original_df.round(3).to_html(
+                classes='data-table', index=False
+            )
+            context['target_class_name']   = class_names[target_class]
+            context['original_class_name'] = class_names[
+                active_model.predict([x])[0]
+            ]
 
-    
+
     # -----------------------------------------------------------------
     # FEATURE EFFECT PLOTS (PDP + ALE)
     # -----------------------------------------------------------------

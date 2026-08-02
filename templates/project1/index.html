@@ -1,171 +1,144 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Project 1 · Supervised Learning{% endblock %}
+
 {% block content %}
-<div style="max-width:1100px; margin:30px auto; padding:0 20px;">
+<div class="page">
 
-    <h1 style="text-align:center;">Project 1: Supervised Learning Interface</h1>
+    <div class="page-header">
+        <h1>Project 1 · Supervised Learning</h1>
+        <p class="subtitle">Upload a tabular dataset, explore it visually, and train a classical ML model with an interactive hyperparameter sweep. The last column of your CSV is treated as the target; problem type is auto-detected.</p>
+    </div>
 
-    <!--Upload Form-->
-    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
-        <h2>Step 1: Upload Dataset</h2>
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <!-- Step 1: Upload -->
+    <div class="card">
+        <h2>Step 1 · Upload dataset</h2>
+        <p>CSV only. Leading <code>id</code> / <code>index</code> columns are dropped automatically.</p>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action" value="upload">
-
-            <div style="margin-bottom:15px;">
-                <label><strong>Upload CSV File:</strong></label><br>
-                <input type="file" name="csv_file" accept=".csv" required style="margin-top:8px;">
+            <div class="field-row">
+                <div class="field">
+                    <label for="csv_file">CSV file</label>
+                    <input id="csv_file" type="file" name="csv_file" accept=".csv" required>
+                </div>
+                <div class="field">
+                    <label for="problem_type">Problem type</label>
+                    <select id="problem_type" name="problem_type">
+                        <option value="auto">Auto-detect</option>
+                        <option value="classification">Classification</option>
+                        <option value="regression">Regression</option>
+                    </select>
+                </div>
             </div>
-
-            <div style="margin-bottom:15px;">
-                <label><strong>Problem Type:</strong></label><br>
-                <select name="problem_type" style="margin-top:8px; padding:5px;">
-                    <option value="auto">Auto Detect</option>
-                    <option value="classification">Classification</option>
-                    <option value="regression">Regression</option>
-                </select>
-            </div>
-
-            <button type="submit"
-                style="background:steelblue; color:white; padding:10px 25px;
-                       border:none; border-radius:5px; cursor:pointer;">
-                Upload & Visualize
-            </button>
+            <button type="submit" class="btn">Upload &amp; visualize</button>
         </form>
     </div>
 
-    <!-- error -->
-    {% if error %}
-    <div style="background:#ffe0e0; padding:15px; border-radius:8px; color:red; margin-bottom:20px;">
-        {{ error }}
-    </div>
-    {% endif %}
-
-    <!-- Results of Visualization -->
     {% if success %}
-
-    <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-bottom:25px;">
-        <h3>Dataset Info</h3>
-        <p>
-            <strong>Samples:</strong> {{ n_samples }} &nbsp;|&nbsp;
-            <strong>Features:</strong> {{ n_features }} &nbsp;|&nbsp;
-            <strong>Target:</strong> {{ target_col }} &nbsp;|&nbsp;
-            <strong>Problem type:</strong>
-            <span style="color:steelblue;">{{ problem_type }}</span>
-        </p>
+    <div class="card">
+        <h2>Dataset overview</h2>
+        <div class="metrics">
+            <div class="metric-tile"><div class="label">Samples</div><div class="value">{{ n_samples }}</div></div>
+            <div class="metric-tile"><div class="label">Features</div><div class="value">{{ n_features }}</div></div>
+            <div class="metric-tile"><div class="label">Target</div><div class="value" style="font-size:15px; font-family: var(--font-ui);">{{ target_col }}</div></div>
+            <div class="metric-tile accent"><div class="label">Problem type</div><div class="value" style="font-size:15px; font-family: var(--font-ui);">{{ problem_type }}</div></div>
+        </div>
     </div>
 
-    <div style="margin-bottom:30px;">
-        <h3>Data Preview (first 10 rows)</h3>
-        <div style="overflow-x:auto;">{{ table_html|safe }}</div>
+    <div class="card">
+        <h2>Data preview</h2>
+        <p class="muted">First 10 rows.</p>
+        <div class="table-wrap">{{ table_html|safe }}</div>
     </div>
 
-    <div style="margin-bottom:30px;">
-        <h3>Dataset Statistics</h3>
-        <div style="overflow-x:auto;">{{ stats_html|safe }}</div>
+    <div class="card">
+        <h2>Descriptive statistics</h2>
+        <div class="table-wrap">{{ stats_html|safe }}</div>
     </div>
 
-    <div style="margin-bottom:30px;">
-        <h3>Feature Distributions</h3>
-        <img src="{{ hist_url }}" style="max-width:100%; border-radius:8px;">
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Feature distributions</h2>
+            <div class="plot plot-wide"><img src="{{ hist_url }}" alt="Feature distributions"></div>
+        </div>
+        <div class="card">
+            <h2>Scatter plot</h2>
+            <div class="plot plot-narrow"><img src="{{ scatter_url }}" alt="Scatter"></div>
+        </div>
     </div>
 
-    <div style="margin-bottom:30px;">
-        <h3>Scatter Plot</h3>
-        <img src="{{ scatter_url }}" style="max-width:600px; border-radius:8px;">
+    <div class="card">
+        <h2>Correlation heatmap</h2>
+        <div class="plot plot-medium"><img src="{{ heatmap_url }}" alt="Correlation heatmap"></div>
     </div>
 
-    <div style="margin-bottom:30px;">
-        <h3>Correlation Heatmap</h3>
-        <img src="{{ heatmap_url }}" style="max-width:700px; border-radius:8px;">
-    </div>
-
-    <!-- Training Form -->
-    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
-        <h2>Step 2: Train a Model</h2>
+    <!-- Step 2: Train -->
+    <div class="card">
+        <h2>Step 2 · Train a model</h2>
+        <p>Pick a model, split ratio, and metric. Each candidate hyperparameter is swept and scored on the held-out test set.</p>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="train">
             <input type="hidden" name="csv_filename" value="{{ csv_filename }}">
             <input type="hidden" name="problem_type" value="{{ problem_type }}">
-
-            <div style="display:flex; gap:20px; flex-wrap:wrap;">
-
-                <div>
-                    <label><strong>Model:</strong></label><br>
-                    <select name="model_name" style="padding:5px; margin-top:8px;">
-                        {% for m in models %}
-                            <option value="{{ m }}">{{ m }}</option>
-                        {% endfor %}
+            <div class="field-row">
+                <div class="field">
+                    <label for="model_name">Model</label>
+                    <select id="model_name" name="model_name">
+                        {% for m in models %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
                     </select>
                 </div>
-
-                <div>
-                    <label><strong>Test Size:</strong></label><br>
-                    <select name="test_size" style="padding:5px; margin-top:8px;">
-                        <option value="0.1">10%</option>
-                        <option value="0.2" selected>20%</option>
-                        <option value="0.3">30%</option>
-                        <option value="0.4">40%</option>
+                <div class="field">
+                    <label for="test_size">Test size</label>
+                    <select id="test_size" name="test_size">
+                        <option value="0.1">10 %</option>
+                        <option value="0.2" selected>20 %</option>
+                        <option value="0.3">30 %</option>
+                        <option value="0.4">40 %</option>
                     </select>
                 </div>
-
-                <div>
-                    <label><strong>Metric:</strong></label><br>
-                    <select name="metric" style="padding:5px; margin-top:8px;">
-                        {% for met in metrics %}
-                            <option value="{{ met }}">{{ met }}</option>
-                        {% endfor %}
+                <div class="field">
+                    <label for="metric">Metric</label>
+                    <select id="metric" name="metric">
+                        {% for met in metrics %}<option value="{{ met }}">{{ met }}</option>{% endfor %}
                     </select>
                 </div>
-
             </div>
-
-            <br>
-            <button type="submit"
-                style="background:#2e8b57; color:white; padding:10px 25px;
-                       border:none; border-radius:5px; cursor:pointer;">
-                Train Model
-            </button>
+            <button type="submit" class="btn">Train model</button>
         </form>
     </div>
     {% endif %}
 
-    <!--Training Results-->
     {% if train_success %}
-    <div style="background:#e8f8e8; padding:15px; border-radius:8px; margin-bottom:25px;">
-        <h3>Training Results — {{ model_name }}</h3>
-        <p>
-            <strong>Metric:</strong> {{ metric }} &nbsp;|&nbsp;
+    <div class="card">
+        <h2>Training results · {{ model_name }}</h2>
+        <div class="metrics">
+            <div class="metric-tile"><div class="label">Metric</div><div class="value" style="font-size:15px; font-family: var(--font-ui);">{{ metric }}</div></div>
             {% if best_param_name %}
-                <strong>Best {{ best_param_name }}:</strong> {{ best_param }} &nbsp;|&nbsp;
+            <div class="metric-tile"><div class="label">Best {{ best_param_name }}</div><div class="value">{{ best_param }}</div></div>
             {% endif %}
-            <strong>Best Score:</strong>
-            <span style="color:green; font-size:1.2em;">{{ best_score }}</span>
-        </p>
+            <div class="metric-tile accent"><div class="label">Best score</div><div class="value">{{ best_score }}</div></div>
+        </div>
     </div>
 
     {% if score_plot_url %}
-    <div style="margin-bottom:30px;">
-        <h3>Score vs Hyperparameter</h3>
-        <img src="{{ score_plot_url }}" style="max-width:700px; border-radius:8px;">
+    <div class="card">
+        <h2>Score vs hyperparameter</h2>
+        <div class="plot plot-medium"><img src="{{ score_plot_url }}" alt="Score curve"></div>
     </div>
     {% endif %}
 
-    <div style="margin-bottom:30px;">
-        <h3>All Results</h3>
-        <div style="overflow-x:auto;">{{ results_html|safe }}</div>
+    <div class="card">
+        <h2>All results</h2>
+        <div class="table-wrap">{{ results_html|safe }}</div>
     </div>
     {% endif %}
 
 </div>
-
-<style>
-.data-table { border-collapse:collapse; width:100%; font-size:13px; }
-.data-table th, .data-table td { border:1px solid #ddd; padding:6px 10px; text-align:left; }
-.data-table th { background:steelblue; color:white; }
-.data-table tr:nth-child(even) { background:#f2f2f2; }
-</style>
-
 {% endblock %}

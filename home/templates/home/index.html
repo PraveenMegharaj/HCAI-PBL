@@ -1,30 +1,22 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{%  load static %}
-
-{% block extra_css %}
-        <link rel= "stylesheet" href="{% static 'home/style.css'%}">
-{% endblock %}
+{% block title %}HCAI · Project Hub{% endblock %}
 
 {% block content %}
+<div class="page">
 
-<div class="box">
-    <div class="title-container">
-        <div class = "title">HCAI project hub</div>
-    </div>
+    <section class="home-hero">
+        <h1>Human-Centric AI · Project Hub</h1>
+        <p class="lede">Interactive demos from the HCAI course at TUHH. Each project explores a different facet of building machine-learning systems that keep humans in the loop.</p>
+    </section>
 
-    <div class="main-text">
-    <div class="summary" >
-        <p class="centered-text">This page serves as the central hub for student 
-        projects developed as part of the <strong>Human-Centric Artificial Intelligence</strong> 
-        course, by the following group:</p>
-    </div>
-    
-    <div class="students">
+    <div class="card">
+        <h2>Team</h2>
         <ul class="student-list">
             {% for student in students %}
                 <li class="student-item">
-                    <span class="student-name">{{ student.name }}</span> –
+                    <span class="student-name">{{ student.name }}</span>
                     <span class="student-id">{{ student.matriculation }}</span>
                 </li>
             {% empty %}
@@ -32,23 +24,20 @@
             {% endfor %}
         </ul>
     </div>
-    
-    
-    <div class="projects">
-        <h2 style="text-align: center;">Projects</h2>
-        <div class="button-container">
+
+    <div class="card">
+        <h2>Projects</h2>
+        <div class="project-grid">
             {% for project in projects %}
-                <a href="{% url project.url_name %}">
-                    <button type="submit">{{ project.name }}</button>
+                <a href="{% url project.url_name %}" class="project-card">
+                    <span class="num">{{ project.name }}</span>
+                    <span class="name">{{ project.title }}</span>
+                    <span class="desc">{{ project.blurb }}</span>
+                    <span class="go">Open →</span>
                 </a>
             {% endfor %}
         </div>
     </div>
-    
 
 </div>
-
 {% endblock %}
-
-{% block script %}
-{% endblock script %}
