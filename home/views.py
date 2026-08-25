@@ -1,33 +1,24 @@
-# from django.http import HttpResponse
-
-
-# def index(request):
-#     return HttpResponse("Hello, world. You're at the polls index.")
-
-from django.http import HttpResponse
-from django.template import loader
+from django.shortcuts import render
 
 
 def index(request):
-    template = loader.get_template("home/index.html")
-    
-    
     students = [
         {"name": "Praveen Megharaj", "matriculation": "672067"},
-        {"name": "Niharika Kiran", "matriculation": "672070"},
+        {"name": "Niharika Kiran",   "matriculation": "672070"},
     ]
-    
     projects = [
-        {"name": "Project 1", "url_name": "project1:index"},
-        {"name": "Project 2", "url_name": "project2:index"},
-        {"name": "Project 3", "url_name": "project3:index"},
-        {"name": "Project 4", "url_name": "project4:index"},
-        {"name": "Project 5", "url_name": "project5:index"},
+        {"name": "Project 1", "title": "Supervised Learning",
+         "blurb": "Upload a tabular dataset, explore it, and train a classical model with an interactive hyperparameter sweep.",
+         "url_name": "project1:index"},
+        {"name": "Project 2", "title": "Explainability",
+         "blurb": "Palmer Penguins with complexity-controlled models, counterfactuals, and PDP + ALE feature effects.",
+         "url_name": "project2:index"},
+        {"name": "Project 3", "title": "Learning to Defer",
+         "blurb": "AG News classification with a simulated expert, a deferral policy, and active learning for expert competence.",
+         "url_name": "project3:index"},
+        {"name": "Project 4", "title": "Coming soon",
+         "blurb": "Not started yet — placeholder page.",
+         "url_name": "project4:index"},
     ]
-    
-    context = { 
-        "students": students, 
-        "projects": projects, 
-    }
-    
-    return HttpResponse(template.render(context, request))
+    return render(request, "home/index.html",
+                  {"students": students, "projects": projects})

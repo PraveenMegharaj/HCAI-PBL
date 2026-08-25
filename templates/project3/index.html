@@ -1,6 +1,131 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Project 3 · Learning to Defer{% endblock %}
 
 {% block content %}
-<h1>Project 3</h1>
-<p>Coming soon...</p>
+<div class="page">
+
+    <div class="page-header">
+        <h1>Project 3 · Learning to Defer</h1>
+        <p class="subtitle">AG News topic classification with a simulated expert. A baseline classifier learns the task; a region-competent expert models human specialisation. Tasks 3–5 (deferral policy, active learning, interactive expert) are added by the teammate.</p>
+    </div>
+
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    {% if train_success %}<div class="alert alert-success">Baseline classifier retrained and cached.</div>{% endif %}
+
+    <!-- Task 1 -->
+    <div class="card">
+        <h2>Task 1 · Baseline classifier</h2>
+        <p>TF-IDF (unigrams + bigrams, 20 000 features, sublinear TF) followed by a <strong>Logistic Regression</strong> trained on the full AG News training split. Cached to disk after the first run.</p>
+
+        {% if not baseline %}
+            <div class="card-hint">No cached baseline yet — training takes ~30–60 s the first time.</div>
+            <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="train_baseline">
+                <button type="submit" class="btn">Train baseline classifier</button>
+            </form>
+        {% else %}
+            <div class="metrics">
+                <div class="metric-tile accent"><div class="label">Test accuracy</div><div class="value">{{ baseline.accuracy }}</div></div>
+                <div class="metric-tile"><div class="label">Train samples</div><div class="value">{{ baseline.n_train }}</div></div>
+                <div class="metric-tile"><div class="label">Test samples</div><div class="value">{{ baseline.n_test }}</div></div>
+                <div class="metric-tile"><div class="label">TF-IDF features</div><div class="value">{{ baseline.n_features }}</div></div>
+            </div>
+            <form method="post" style="margin-top:16px;">{% csrf_token %}
+                <input type="hidden" name="action" value="train_baseline">
+                <button type="submit" class="btn btn-secondary btn-sm">Retrain baseline</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if baseline %}
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Baseline confusion matrix</h2>
+            <div class="plot"><img src="{{ baseline_cm_url }}" alt="Baseline confusion matrix"></div>
+        </div>
+        <div class="card">
+            <h2>Per-class report</h2>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for name, m in baseline.per_class.items %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ m.precision }}</td>
+                            <td>{{ m.recall }}</td>
+                            <td>{{ m.f1 }}</td>
+                            <td>{{ m.support }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Task 2 -->
+    {% if baseline %}
+    <div class="card">
+        <h2>Task 2 · Simulated region-competent expert</h2>
+        <p>Real experts specialise. We model this with an expert that is <strong>highly accurate on a chosen subset of classes</strong> and noisy elsewhere. The point isn't to build a strong expert — it's to give the expert a <em>competence structure</em> that a deferral policy can exploit.</p>
+
+        <form method="post">{% csrf_token %}
+            <div class="field-row">
+                <div class="field">
+                    <label for="competent_classes">Competent on classes</label>
+                    <select id="competent_classes" name="competent_classes">
+                        <option value="0,1" {% if expert.competent_str == '0,1' %}selected{% endif %}>World + Sports</option>
+                        <option value="2,3" {% if expert.competent_str == '2,3' %}selected{% endif %}>Business + Sci/Tech</option>
+                        <option value="0"   {% if expert.competent_str == '0' %}selected{% endif %}>World only</option>
+                        <option value="1"   {% if expert.competent_str == '1' %}selected{% endif %}>Sports only</option>
+                        <option value="2"   {% if expert.competent_str == '2' %}selected{% endif %}>Business only</option>
+                        <option value="3"   {% if expert.competent_str == '3' %}selected{% endif %}>Sci/Tech only</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="competent_acc">P(correct | competent)</label>
+                    <input id="competent_acc" name="competent_acc" type="number" step="0.01" min="0" max="1" value="{{ expert.competent_acc }}">
+                </div>
+                <div class="field">
+                    <label for="other_acc">P(correct | other)</label>
+                    <input id="other_acc" name="other_acc" type="number" step="0.01" min="0" max="1" value="{{ expert.other_acc }}">
+                </div>
+            </div>
+            <button type="submit" class="btn">Re-evaluate expert</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Expert profile</h2>
+        <div class="metrics">
+            <div class="metric-tile accent"><div class="label">Overall accuracy</div><div class="value">{{ expert.overall_accuracy }}</div></div>
+            <div class="metric-tile"><div class="label">Competent on</div><div class="value" style="font-size:14px; font-family: var(--font-ui); font-weight: 500;">{{ expert.description.competent_classes|join:', ' }}</div></div>
+            <div class="metric-tile"><div class="label">Weak on</div><div class="value" style="font-size:14px; font-family: var(--font-ui); font-weight: 500;">{{ expert.description.other_classes|join:', ' }}</div></div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Expert confusion matrix</h2>
+            <div class="plot"><img src="{{ expert_cm_url }}" alt="Expert confusion matrix"></div>
+        </div>
+        <div class="card">
+            <h2>Per-class accuracy</h2>
+            <div class="plot"><img src="{{ expert_bar_url }}" alt="Per-class accuracy"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Tasks 3 · 4 · 5</h2>
+        <p class="muted">Learning-to-defer, active learning for expert competence, and the optional interactive interface are implemented by the teammate. Their sections will appear below once merged.</p>
+    </div>
+    {% endif %}
+
+</div>
 {% endblock %}

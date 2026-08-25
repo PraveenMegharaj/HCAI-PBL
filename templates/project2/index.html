@@ -1,229 +1,159 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Project 2 · Explainability{% endblock %}
+
 {% block content %}
-<div style="max-width:1200px; margin:30px auto; padding:0 20px;">
+<div class="page">
 
-    <h1 style="text-align:center;">Project 2: Explainability</h1>
-    <h2 style="text-align:center; color:gray;">Palmer Penguins Dataset</h2>
+    <div class="page-header">
+        <h1>Project 2 · Explainability</h1>
+        <p class="subtitle">Palmer Penguins classification with model complexity control, counterfactual explanations, and feature-effect plots (PDP + ALE). Tune the complexity penalty λ to see how a simpler model can still stay accurate.</p>
+    </div>
 
-    <!-- ───── CONTROL PANEL ───── -->
-    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
+    <!-- Controls -->
+    <div class="card">
         <h2>Controls</h2>
+        <p>The best model is chosen automatically by maximising <code>accuracy − λ × complexity</code>. Higher λ favours simpler models.</p>
         <form method="post">
             {% csrf_token %}
-
-            <!-- Model Type -->
-            <div style="margin-bottom:15px;">
-                <label><strong>Model Type:</strong></label><br>
-                <select name="model_type" style="padding:5px; margin-top:8px;"
-                        onchange="this.form.submit()">
-                    <option value="tree"
-                        {% if model_type == 'tree' %}selected{% endif %}>
-                        Decision Tree
-                    </option>
-                    <option value="logistic"
-                        {% if model_type == 'logistic' %}selected{% endif %}>
-                        Logistic Regression
-                    </option>
-                </select>
+            <div class="field-row">
+                <div class="field">
+                    <label for="model_type">Model family</label>
+                    <select id="model_type" name="model_type" onchange="this.form.submit()">
+                        <option value="tree"     {% if model_type == 'tree' %}selected{% endif %}>Decision Tree</option>
+                        <option value="logistic" {% if model_type == 'logistic' %}selected{% endif %}>Logistic Regression (L1)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="lam">λ · complexity penalty <span class="pill mono" id="lam_val" style="margin-left:8px;">{{ lam }}</span></label>
+                    <input id="lam" type="range" name="lam" min="0" max="0.1" step="0.001" value="{{ lam }}"
+                           oninput="document.getElementById('lam_val').textContent=this.value">
+                </div>
             </div>
-
-            <!-- Lambda Slider -->
-            <div style="margin-bottom:15px;">
-                <label>
-                    <strong>λ (Regularization penalty):</strong>
-                    <span id="lam_val">{{ lam }}</span>
-                </label><br>
-                <input type="range" name="lam"
-                       min="0" max="0.1" step="0.001"
-                       value="{{ lam }}"
-                       style="width:400px; margin-top:8px;"
-                       oninput="document.getElementById('lam_val').textContent=this.value">
-            </div>
-
-            <button type="submit"
-                style="background:steelblue; color:white; padding:10px 25px;
-                       border:none; border-radius:5px; cursor:pointer;">
-                Update Model
-            </button>
+            <button type="submit" class="btn">Update model</button>
         </form>
     </div>
 
-    <!-- ───── MODEL RESULTS ───── -->
-    <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-bottom:25px;">
-        <h3>Model Results</h3>
+    <div class="card">
+        <h2>Model results</h2>
         {% if model_type == 'tree' %}
-        <p>
-            <strong>Test Accuracy:</strong> {{ accuracy }} &nbsp;|&nbsp;
-            <strong>Number of Leaves:</strong> {{ n_leaves }} &nbsp;|&nbsp;
-            <strong>Objective Score (acc - λ×leaves):</strong> {{ best_score }}
-        </p>
+        <div class="metrics">
+            <div class="metric-tile accent"><div class="label">Test accuracy</div><div class="value">{{ accuracy }}</div></div>
+            <div class="metric-tile"><div class="label">Leaves</div><div class="value">{{ n_leaves }}</div></div>
+            <div class="metric-tile"><div class="label">Objective</div><div class="value">{{ best_score }}</div></div>
+        </div>
         {% else %}
-        <p>
-            <strong>Test Accuracy:</strong> {{ accuracy }} &nbsp;|&nbsp;
-            <strong>Non-zero Coefficients:</strong> {{ nonzero }} &nbsp;|&nbsp;
-            <strong>Best C:</strong> {{ best_C }} &nbsp;|&nbsp;
-            <strong>Objective Score:</strong> {{ best_score }}
-        </p>
+        <div class="metrics">
+            <div class="metric-tile accent"><div class="label">Test accuracy</div><div class="value">{{ accuracy }}</div></div>
+            <div class="metric-tile"><div class="label">Non-zero coefs</div><div class="value">{{ nonzero }}</div></div>
+            <div class="metric-tile"><div class="label">Best C</div><div class="value">{{ best_C }}</div></div>
+            <div class="metric-tile"><div class="label">Objective</div><div class="value">{{ best_score }}</div></div>
+        </div>
         {% endif %}
     </div>
 
-    <!-- ───── ACCURACY PLOT ───── -->
     {% if acc_plot_url %}
-    <div style="margin-bottom:30px;">
-        <h3>Accuracy vs Complexity</h3>
-        <img src="{{ acc_plot_url }}"
-             style="max-width:800px; border-radius:8px;">
+    <div class="card">
+        <h2>Accuracy vs complexity</h2>
+        <div class="plot plot-medium"><img src="{{ acc_plot_url }}" alt="Accuracy vs complexity"></div>
     </div>
     {% endif %}
 
-    <!-- ───── TREE VISUALISATION ───── -->
     {% if tree_url %}
-    <div style="margin-bottom:30px;">
-        <h3>Decision Tree Visualisation</h3>
-        <div style="overflow-x:auto;">
-            <img src="{{ tree_url }}"
-                 style="max-width:100%; border-radius:8px;">
-        </div>
+    <div class="card">
+        <h2>Decision tree</h2>
+        <div class="plot plot-wide"><img src="{{ tree_url }}" alt="Decision tree"></div>
     </div>
     {% endif %}
 
-    <!-- ───── COUNTERFACTUAL SECTION ───── -->
-    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
-        <h2>Task 4: Counterfactual Explanations</h2>
-        <p style="color:gray;">
-            Select a data point and a target class to see what minimal
-            changes would lead to a different prediction.
-        </p>
-
+    <!-- Task 4 -->
+    <div class="card">
+        <h2>Task 4 · Counterfactual explanations</h2>
+        <p>Pick a data point and a target class. The system searches for the closest samples (measured by MAD-weighted L1 distance) whose predicted class matches your target.</p>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="model_type" value="{{ model_type }}">
             <input type="hidden" name="lam"        value="{{ lam }}">
             <input type="hidden" name="action"     value="counterfactual">
-
-            <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:15px;">
-
-                <div>
-                    <label><strong>Select Data Point (index):</strong></label><br>
-                    <select name="selected_idx" style="padding:5px; margin-top:8px;">
+            <div class="field-row">
+                <div class="field">
+                    <label for="selected_idx">Data point index</label>
+                    <select id="selected_idx" name="selected_idx">
                         {% for i in data_indices %}
-                            <option value="{{ i }}"
-                                {% if i == selected_idx %}selected{% endif %}>
-                                #{{ i }}
-                            </option>
+                            <option value="{{ i }}" {% if i == selected_idx %}selected{% endif %}>#{{ i }}</option>
                         {% endfor %}
                     </select>
                 </div>
-
-                <div>
-                    <label><strong>Target Class:</strong></label><br>
-                    <select name="target_class" style="padding:5px; margin-top:8px;">
+                <div class="field">
+                    <label for="target_class">Target class</label>
+                    <select id="target_class" name="target_class">
                         <option value="0">{{ class_names.0 }}</option>
                         <option value="1">{{ class_names.1 }}</option>
                         <option value="2">{{ class_names.2 }}</option>
-                </select>
+                    </select>
+                </div>
             </div>
-
-            </div>
-            <button type="submit"
-                style="background:#2e8b57; color:white; padding:10px 25px;
-                    border:none; border-radius:5px; cursor:pointer;">
-                Generate Counterfactuals
-            </button>
+            <button type="submit" class="btn">Generate counterfactuals</button>
         </form>
     </div>
 
     {% if cf_error %}
-    <div style="background:#ffe0e0; padding:15px; border-radius:8px;
-                color:red; margin-bottom:20px;">
-        {{ cf_error }}
-    </div>
+        <div class="alert alert-error">{{ cf_error }}</div>
     {% endif %}
 
     {% if cf_table %}
-    <div style="margin-bottom:30px;">
-        <h3>Counterfactual Results</h3>
-        <p>
-            <strong>Original class:</strong>
-            <span style="color:steelblue;">{{ original_class_name }}</span>
-            &nbsp;&rarr;&nbsp;
-            <strong>Target class:</strong>
-            <span style="color:green;">{{ target_class_name }}</span>
+    <div class="card">
+        <h2>Counterfactual results</h2>
+        <p class="flex-row mb-24">
+            <span class="pill">Original · {{ original_class_name }}</span>
+            <span class="mono muted">→</span>
+            <span class="pill success">Target · {{ target_class_name }}</span>
         </p>
-        <h4>Original Data Point:</h4>
-        <div style="overflow-x:auto;">{{ orig_table|safe }}</div>
-        <h4 style="margin-top:20px;">
-            Top 5 Counterfactuals (ranked by MAD-weighted L1 distance):
-        </h4>
-        <div style="overflow-x:auto;">{{ cf_table|safe }}</div>
+        <h4>Original data point</h4>
+        <div class="table-wrap mb-24">{{ orig_table|safe }}</div>
+        <h4>Top 5 counterfactuals · MAD-weighted L1</h4>
+        <div class="table-wrap">{{ cf_table|safe }}</div>
     </div>
     {% endif %}
 
-
-    <!-- ───── FEATURE EFFECT PLOTS ───── -->
-    <div style="background:#f9f9f9; padding:20px; border-radius:8px; margin-bottom:30px;">
-        <h2>Task 5: Feature Effect Plots</h2>
-        <p style="color:gray;">
-            Select a numerical feature to view its PDP and ALE plots.
-            Results are linked to the currently selected model and lambda.
-        </p>
-
+    <!-- Task 5 -->
+    <div class="card">
+        <h2>Task 5 · Feature effect plots</h2>
+        <p>Pick a numerical feature to see how it drives the predicted probability of each species — via Partial Dependence (PDP) and Accumulated Local Effects (ALE, which stays reliable under feature correlation).</p>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="model_type" value="{{ model_type }}">
             <input type="hidden" name="lam"        value="{{ lam }}">
             <input type="hidden" name="action"     value="feature_effect">
-
-            <div style="margin-bottom:15px;">
-                <label><strong>Select Feature:</strong></label><br>
-                <select name="selected_feature"
-                        style="padding:5px; margin-top:8px;">
-                    {% for feat in numerical_features %}
-                        <option value="{{ feat }}"
-                            {% if feat == selected_feature %}selected{% endif %}>
-                            {{ feat }}
-                        </option>
-                    {% endfor %}
-                </select>
+            <div class="field-row">
+                <div class="field">
+                    <label for="selected_feature">Feature</label>
+                    <select id="selected_feature" name="selected_feature">
+                        {% for feat in numerical_features %}
+                            <option value="{{ feat }}" {% if feat == selected_feature %}selected{% endif %}>{{ feat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-
-            <button type="submit"
-                style="background:#8b2e8b; color:white; padding:10px 25px;
-                       border:none; border-radius:5px; cursor:pointer;">
-                Generate Plots
-            </button>
+            <button type="submit" class="btn">Generate plots</button>
         </form>
     </div>
 
     {% if feature_effect_done %}
-    <div style="margin-bottom:30px;">
-        <h3>PDP — {{ selected_feature }}</h3>
-        <p style="color:gray; font-size:0.9em;">
-            Shows the average predicted probability of each species
-            as the selected feature varies, marginalised over all other features.
-        </p>
-        <img src="{{ pdp_url }}"
-            style="max-width:700px; border-radius:8px;">
-    </div>
-
-    <div style="margin-bottom:30px;">
-        <h3>ALE — {{ selected_feature }}</h3>
-        <p style="color:gray; font-size:0.9em;">
-            Shows accumulated local effects of the feature on each species
-            probability. More reliable than PDP when features are correlated.
-        </p>
-        <img src="{{ ale_url }}"
-            style="max-width:700px; border-radius:8px;">
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>PDP · {{ selected_feature }}</h2>
+            <p class="muted">Average predicted probability of each species as this feature varies, marginalised over all others.</p>
+            <div class="plot"><img src="{{ pdp_url }}" alt="PDP"></div>
+        </div>
+        <div class="card">
+            <h2>ALE · {{ selected_feature }}</h2>
+            <p class="muted">Accumulated Local Effect — more reliable than PDP when features are correlated.</p>
+            <div class="plot"><img src="{{ ale_url }}" alt="ALE"></div>
+        </div>
     </div>
     {% endif %}
 
-
 </div>
-
-<style>
-input[type=range] { cursor: pointer; }
-</style>
-
 {% endblock %}
