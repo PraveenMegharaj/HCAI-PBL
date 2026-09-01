@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Consent · Project 4{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-header">
+        <h1>Informed consent</h1>
+        <p class="subtitle">Please read the information below before starting the study.</p>
+    </div>
+
+    <div class="card">
+        <h2>What the study is about</h2>
+        <p>You will help us evaluate two interfaces for eliciting movie preferences. In one you compare two movies at a time; in the other you rank a small set. The study takes about 5–10 minutes and is done in the browser.</p>
+
+        <h2>What is recorded</h2>
+        <ul>
+            <li>Your responses (which movie you preferred, or the order you gave to a set)</li>
+            <li>How long each response took</li>
+            <li>The condition you were assigned to</li>
+            <li>Optional demographic categories you provide below</li>
+        </ul>
+        <p>No name, email, IP address, or other personally identifying information is stored.</p>
+
+        <h2>Your rights</h2>
+        <p>Participation is voluntary. You can close the browser tab at any time to stop. Data collected up to that point may still be used for analysis.</p>
+    </div>
+
+    <div class="card">
+        <h2>Please confirm to continue</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label>
+                    <input type="checkbox" name="consented" required>
+                    I have read the information above and I consent to take part.
+                </label>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="id_age_group">Age group (optional)</label>
+                    <select id="id_age_group" name="age_group">
+                        {% for value, label in form.age_group.field.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="id_prior_ml_exp">Prior ML/AI experience (optional)</label>
+                    <select id="id_prior_ml_exp" name="prior_ml_exp">
+                        {% for value, label in form.prior_ml_exp.field.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% if form.errors %}
+                <div class="alert alert-error">{{ form.errors }}</div>
+            {% endif %}
+            <button type="submit" class="btn">I consent — start the study</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

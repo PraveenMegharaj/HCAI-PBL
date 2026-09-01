@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Project 4 · Preference Elicitation{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="page-header">
+        <h1>Project 4 · Preference Elicitation for Movie Recommendation</h1>
+        <p class="subtitle">A user-study interface comparing two ways to elicit a new user's movie preferences: pairwise choices vs. ranking a set of ten. Built on the IMDB 5000 dataset with a Plackett-Luce preference model.</p>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Report</h2>
+            <p>PDF report covering the feature representation (Task 1), the Plackett-Luce extension of Bradley-Terry (Task 2), the design of the user study (Task 3), and the interface (Task 4).</p>
+            <p><a class="btn" href="{% static 'project4/report.pdf' %}" download>↓ Download report (PDF)</a></p>
+        </div>
+
+        <div class="card">
+            <h2>Take part in the study</h2>
+            <p>The whole thing takes about 5–10 minutes. Your responses are stored anonymously — no personal identifiers are collected. Each participant is randomly assigned to one of two interface conditions.</p>
+            <p><a class="btn btn-secondary" href="{% url 'project4:consent' %}">Start the user study →</a></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>What you'll do</h2>
+        <p>You will be randomly assigned to one of two conditions:</p>
+        <ul>
+            <li><strong>Design 1 · Pairwise choice.</strong> You are shown two movies at a time and click the one you'd rather watch. Repeated {{ n_trials_pairwise }} times.</li>
+            <li><strong>Design 2 · Rank a set.</strong> You are shown a set of {{ ranking_set_size }} movies and drag them into your preferred order (best on top, worst at the bottom). Repeated {{ n_trials_ranking }} times.</li>
+        </ul>
+        <p>Both designs elicit the same underlying preference vector — the point of the study is to compare their ergonomics and data quality.</p>
+    </div>
+
+    <div class="card">
+        <h2>Software structure</h2>
+        <p class="muted">Code is split into <code>ml.py</code> (dataset loading, feature extraction, Plackett-Luce), <code>models.py</code> (Participant, PairwiseResponse, RankingResponse), <code>forms.py</code>, <code>urls.py</code>, <code>views.py</code> (thin controllers), and <code>tests.py</code>. All responses are visible in <code>/admin</code> for the researcher.</p>
+    </div>
+
+</div>
+{% endblock %}

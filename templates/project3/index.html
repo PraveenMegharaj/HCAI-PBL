@@ -7,8 +7,8 @@
 <div class="page">
 
     <div class="page-header">
-        <h1>Project 3 · Learning to Defer</h1>
-        <p class="subtitle">AG News topic classification with a simulated expert. A baseline classifier learns the task; a region-competent expert models human specialisation. Tasks 3–5 (deferral policy, active learning, interactive expert) are added by the teammate.</p>
+        <h1>Project 3 · Active Learning for Learning-to-Defer</h1>
+        <p class="subtitle">AG News topic classification with a simulated expert, a confidence-threshold deferral policy, and an active-learning strategy that discovers where deferring pays off without seeing expert labels during training.</p>
     </div>
 
     {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
@@ -49,9 +49,7 @@
             <h2>Per-class report</h2>
             <div class="table-wrap">
                 <table class="data-table">
-                    <thead>
-                        <tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
-                    </thead>
+                    <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr></thead>
                     <tbody>
                     {% for name, m in baseline.per_class.items %}
                         <tr>
@@ -67,14 +65,11 @@
             </div>
         </div>
     </div>
-    {% endif %}
 
     <!-- Task 2 -->
-    {% if baseline %}
     <div class="card">
         <h2>Task 2 · Simulated region-competent expert</h2>
-        <p>Real experts specialise. We model this with an expert that is <strong>highly accurate on a chosen subset of classes</strong> and noisy elsewhere. The point isn't to build a strong expert — it's to give the expert a <em>competence structure</em> that a deferral policy can exploit.</p>
-
+        <p>Real experts specialise. We model this with an expert that is <strong>highly accurate on a chosen subset of classes</strong> and noisy elsewhere. The competence structure is what a deferral policy will later exploit.</p>
         <form method="post">{% csrf_token %}
             <div class="field-row">
                 <div class="field">
@@ -105,8 +100,8 @@
         <h2>Expert profile</h2>
         <div class="metrics">
             <div class="metric-tile accent"><div class="label">Overall accuracy</div><div class="value">{{ expert.overall_accuracy }}</div></div>
-            <div class="metric-tile"><div class="label">Competent on</div><div class="value" style="font-size:14px; font-family: var(--font-ui); font-weight: 500;">{{ expert.description.competent_classes|join:', ' }}</div></div>
-            <div class="metric-tile"><div class="label">Weak on</div><div class="value" style="font-size:14px; font-family: var(--font-ui); font-weight: 500;">{{ expert.description.other_classes|join:', ' }}</div></div>
+            <div class="metric-tile"><div class="label">Competent on</div><div class="value" style="font-size:14px; font-weight: 500;">{{ expert.description.competent_classes|join:', ' }}</div></div>
+            <div class="metric-tile"><div class="label">Weak on</div><div class="value" style="font-size:14px; font-weight: 500;">{{ expert.description.other_classes|join:', ' }}</div></div>
         </div>
     </div>
 
@@ -121,9 +116,138 @@
         </div>
     </div>
 
+    <!-- Task 3 -->
     <div class="card">
-        <h2>Tasks 3 · 4 · 5</h2>
-        <p class="muted">Learning-to-defer, active learning for expert competence, and the optional interactive interface are implemented by the teammate. Their sections will appear below once merged.</p>
+        <h2>Task 3 · Learning to defer</h2>
+        <p><strong>Defer to the expert whenever the classifier's top-class probability is below τ.</strong> This uses the model's own confidence as an uncertainty signal — defer exactly when the classifier is least sure.</p>
+        <p class="muted">System accuracy blends model predictions on kept cases with expert predictions on deferred cases. Plot below sweeps τ across [0, 1].</p>
+        <div class="plot plot-medium"><img src="{{ defer_sweep_url }}" alt="Deferral sweep"></div>
+
+        <form method="post" style="margin-top:16px;">{% csrf_token %}
+            <input type="hidden" name="action" value="defer_eval">
+            <input type="hidden" name="competent_classes" value="{{ expert.competent_str }}">
+            <input type="hidden" name="competent_acc"     value="{{ expert.competent_acc }}">
+            <input type="hidden" name="other_acc"         value="{{ expert.other_acc }}">
+            <div class="field-row">
+                <div class="field">
+                    <label for="tau">Confidence threshold τ</label>
+                    <input id="tau" name="tau" type="number" step="0.05" min="0" max="1" value="{{ defer.tau }}">
+                </div>
+            </div>
+            <button type="submit" class="btn">Evaluate at this τ</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Results at τ = {{ defer.result.tau }}</h2>
+        <div class="metrics">
+            <div class="metric-tile accent"><div class="label">System accuracy</div><div class="value">{{ defer.result.system_accuracy }}</div></div>
+            <div class="metric-tile"><div class="label">Defer rate</div><div class="value">{{ defer.result.defer_rate }}</div></div>
+            <div class="metric-tile"><div class="label">Model-only</div><div class="value">{{ defer.result.model_only_acc }}</div></div>
+            <div class="metric-tile"><div class="label">Expert-only</div><div class="value">{{ defer.result.expert_only_acc }}</div></div>
+        </div>
+        <h4 class="mt-24">Full sweep</h4>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>τ</th><th>Defer rate</th><th>System acc</th><th>Kept-model acc</th><th>Deferred-expert acc</th></tr></thead>
+                <tbody>
+                {% for s in defer.sweep %}
+                    <tr>
+                        <td>{{ s.tau }}</td><td>{{ s.defer_rate }}</td><td>{{ s.system_accuracy }}</td>
+                        <td>{{ s.on_kept_model_acc }}</td><td>{{ s.on_deferred_expert_acc }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Task 4 -->
+    <div class="card">
+        <h2>Task 4 · Active learning for expert competence</h2>
+        <p>New setting: <strong>no expert labels available.</strong> A budget of B expert queries is given. Strategy: <strong>least-confident uncertainty sampling</strong> — pick the B points where the classifier's top-class probability is smallest and query the expert there. From those queries we estimate the expert's accuracy conditioned on the model's predicted class, then defer whenever that estimated accuracy exceeds the model's confidence.</p>
+        <p class="muted">Those uncertain points are exactly where deferral might help — labels there give the most information about whether the expert should be trusted.</p>
+        <div class="plot plot-medium"><img src="{{ al_curve_url }}" alt="Active learning curve"></div>
+        <h4 class="mt-24">Budget sweep</h4>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Budget</th><th>Defer rate</th><th>System acc</th><th>Est. expert accuracy per predicted class</th></tr></thead>
+                <tbody>
+                {% for c in al_curve %}
+                    <tr>
+                        <td>{{ c.budget }}</td>
+                        <td>{{ c.defer_rate }}</td>
+                        <td>{{ c.system_accuracy }}</td>
+                        <td>{% for name, v in c.per_class_est.items %}{{ name }}: {{ v }}{% if not forloop.last %} · {% endif %}{% endfor %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Task 5 -->
+    <div class="card">
+        <h2>Task 5 · Interactive expert <span class="pill" style="margin-left:8px;">optional</span></h2>
+        <p>Play the role of the expert. Read the article snippet below and pick the class you think it belongs to. Your running accuracy is tracked on the right; every submitted label is stored in the database (see <code>/admin</code> if you're a superuser).</p>
+        <div class="grid grid-2">
+            <div>
+                <h4>Article #{{ t5_sample_idx }}</h4>
+                <div class="card-hint" style="border-left: 3px solid var(--text-subtle); background: var(--surface-alt); color: var(--text);">{{ t5_sample_text }}</div>
+                <form method="post">{% csrf_token %}
+                    <input type="hidden" name="action" value="human_expert_submit">
+                    <input type="hidden" name="competent_classes" value="{{ expert.competent_str }}">
+                    <input type="hidden" name="competent_acc"     value="{{ expert.competent_acc }}">
+                    <input type="hidden" name="other_acc"         value="{{ expert.other_acc }}">
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="user_label">Your label</label>
+                            <select id="user_label" name="user_label">
+                                {% for name in class_names %}
+                                    <option value="{{ forloop.counter0 }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Submit label</button>
+                </form>
+                <form method="post" style="margin-top:8px;">{% csrf_token %}
+                    <input type="hidden" name="action" value="human_expert_next">
+                    <button type="submit" class="btn btn-ghost btn-sm">Skip · next article</button>
+                </form>
+            </div>
+            <div>
+                <h4>Your session</h4>
+                {% if t5_running_acc is not None %}
+                    <div class="metric-tile accent"><div class="label">Running accuracy</div><div class="value">{{ t5_running_acc }}</div></div>
+                {% else %}
+                    <p class="muted">No labels yet — submit one to start tracking.</p>
+                {% endif %}
+                {% if t5_log %}
+                    <div class="table-wrap" style="margin-top:14px;">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Idx</th><th>Your</th><th>True</th><th>OK</th></tr></thead>
+                            <tbody>
+                            {% for r in t5_log %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td><td>{{ r.idx }}</td>
+                                    <td>{{ class_names|slice:r.user_label|first }}</td>
+                                    <td>{{ class_names|slice:r.true_label|first }}</td>
+                                    <td>{% if r.correct %}<span class="pill success">✓</span>{% else %}<span class="pill danger">✗</span>{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Report</h2>
+        <p>All experiments, design choices, and results, written up as a PDF.</p>
+        <a class="btn btn-secondary" href="{% static 'project3/report.pdf' %}" download>↓ Download report (PDF)</a>
     </div>
     {% endif %}
 
