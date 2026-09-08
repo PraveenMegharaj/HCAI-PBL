@@ -1,0 +1,22 @@
+# HCAI-PBL — Python dependencies
+# Install with:  pip install -r requirements.txt
+# Tested with Python 3.11–3.14.
+
+Django>=5.0,<6.0
+
+# Core scientific stack (Projects 1–4)
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4
+matplotlib>=3.8
+seaborn>=0.13
+
+# Project 2 — dataset
+palmerpenguins>=0.1.4
+
+# Project 3 — AG News dataset (HuggingFace loader; `requests` is the fallback path)
+datasets>=2.18
+requests>=2.31
+
+# Projects 3 & 4 — PDF report generation
+reportlab>=4.0
