@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Study complete — thank you!{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="page-header">
+        <h1>Thank you for taking part!</h1>
+        <p class="subtitle">Your responses have been recorded anonymously.</p>
+    </div>
+
+    <div class="card">
+        <h2>Summary</h2>
+        {% if participant %}
+            <div class="metrics">
+                <div class="metric-tile accent">
+                    <div class="label">Condition</div>
+                    <div class="value" style="font-size: 15px;">{{ participant.get_condition_display }}</div>
+                </div>
+                {% if n_pairwise %}
+                    <div class="metric-tile">
+                        <div class="label">Pairwise choices</div>
+                        <div class="value">{{ n_pairwise }}</div>
+                    </div>
+                {% endif %}
+                {% if n_rankings %}
+                    <div class="metric-tile">
+                        <div class="label">Rankings submitted</div>
+                        <div class="value">{{ n_rankings }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No session found — you may have refreshed after completing.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>What happens next</h2>
+        <p>The anonymised responses are stored in the research database and used only for the comparison of the two interfaces. The report explaining the study design and analysis plan is available on the project landing page.</p>
+        <p>
+            <a class="btn btn-secondary" href="{% url 'project4:landing' %}">← Back to landing</a>
+            <a class="btn btn-secondary" href="{% static 'project4/report.pdf' %}" download style="margin-left: 8px;">↓ Download report</a>
+        </p>
+    </div>
+
+</div>
+{% endblock %}

@@ -16,8 +16,8 @@ def index(request):
         {"name": "Project 3", "title": "Learning to Defer",
          "blurb": "AG News classification with a simulated expert, a deferral policy, and active learning for expert competence.",
          "url_name": "project3:index"},
-        {"name": "Project 4", "title": "Coming soon",
-         "blurb": "Not started yet — placeholder page.",
+        {"name": "Project 4", "title": "Preference Elicitation",
+         "blurb": "Movie-recommender user study comparing pairwise choice vs ranking-of-ten with a Plackett-Luce preference model.",
          "url_name": "project4:index"},
     ]
     return render(request, "home/index.html",

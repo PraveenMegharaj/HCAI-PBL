@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Study · Which do you prefer?{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="page-header">
+        <h1>Which movie would you rather watch?</h1>
+        <p class="subtitle">Trial {{ trial_index|add:1 }} of {{ total_trials }} · click on the movie you prefer.</p>
+    </div>
+
+    <div class="card" style="padding: 14px 20px;">
+        <div style="height: 8px; background: var(--surface-alt); border-radius: 4px; overflow: hidden;">
+            <div style="width: {{ progress_pct }}%; height: 100%; background: var(--accent);"></div>
+        </div>
+    </div>
+
+    <form method="post" id="pairwise-form">
+        {% csrf_token %}
+        <input type="hidden" name="trial_index" value="{{ trial_index }}">
+        <input type="hidden" name="movie_a_id"  value="{{ movie_a.id }}">
+        <input type="hidden" name="movie_b_id"  value="{{ movie_b.id }}">
+        <input type="hidden" name="chosen_movie_id" id="chosen" value="">
+        <input type="hidden" name="response_ms"     id="response_ms" value="">
+
+        <div class="grid grid-2">
+            <button type="button" class="card movie-card" data-id="{{ movie_a.id }}"
+                    style="text-align: left; cursor: pointer; border: 2px solid transparent;">
+                <h2 style="margin: 0 0 8px;">{{ movie_a.title }}{% if movie_a.year %} <span class="muted">({{ movie_a.year }})</span>{% endif %}</h2>
+                {% if movie_a.director %}<p class="muted" style="margin: 2px 0;">Directed by {{ movie_a.director }}</p>{% endif %}
+                <p style="margin: 6px 0;"><span class="pill">{{ movie_a.genres }}</span></p>
+                <p class="muted" style="margin: 4px 0;">
+                    {% if movie_a.imdb %}IMDB {{ movie_a.imdb }} ·{% endif %}
+                    {% if movie_a.runtime %} {{ movie_a.runtime }} min{% endif %}
+                </p>
+            </button>
+
+            <button type="button" class="card movie-card" data-id="{{ movie_b.id }}"
+                    style="text-align: left; cursor: pointer; border: 2px solid transparent;">
+                <h2 style="margin: 0 0 8px;">{{ movie_b.title }}{% if movie_b.year %} <span class="muted">({{ movie_b.year }})</span>{% endif %}</h2>
+                {% if movie_b.director %}<p class="muted" style="margin: 2px 0;">Directed by {{ movie_b.director }}</p>{% endif %}
+                <p style="margin: 6px 0;"><span class="pill">{{ movie_b.genres }}</span></p>
+                <p class="muted" style="margin: 4px 0;">
+                    {% if movie_b.imdb %}IMDB {{ movie_b.imdb }} ·{% endif %}
+                    {% if movie_b.runtime %} {{ movie_b.runtime }} min{% endif %}
+                </p>
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+(function() {
+    const start = performance.now();
+    const form = document.getElementById('pairwise-form');
+    document.querySelectorAll('.movie-card').forEach(el => {
+        el.addEventListener('click', () => {
+            document.getElementById('chosen').value = el.dataset.id;
+            document.getElementById('response_ms').value =
+                Math.round(performance.now() - start);
+            form.submit();
+        });
+        el.addEventListener('mouseover', () => {
+            el.style.borderColor = 'var(--accent)';
+        });
+        el.addEventListener('mouseout', () => {
+            el.style.borderColor = 'transparent';
+        });
+    });
+})();
+</script>
+{% endblock %}

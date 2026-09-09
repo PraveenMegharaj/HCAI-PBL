@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Study · Rank these movies{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="page-header">
+        <h1>Rank these {{ movies|length }} movies</h1>
+        <p class="subtitle">Trial {{ trial_index|add:1 }} of {{ total_trials }} · put your favourite at the top and least favourite at the bottom. Use the ↑ and ↓ buttons on each row.</p>
+    </div>
+
+    <div class="card" style="padding: 14px 20px;">
+        <div style="height: 8px; background: var(--surface-alt); border-radius: 4px; overflow: hidden;">
+            <div style="width: {{ progress_pct }}%; height: 100%; background: var(--accent);"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <ol id="ranking-list" style="list-style: none; padding: 0; margin: 0;">
+            {% for movie in movies %}
+                <li data-id="{{ movie.id }}" style="background: var(--surface-alt); border-radius: var(--radius); padding: 12px 16px; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                    <span class="mono muted" style="width: 24px; text-align: right; font-size: 14px;" data-rank>{{ forloop.counter }}.</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">{{ movie.title }}{% if movie.year %} <span class="muted" style="font-weight: 400;">({{ movie.year }})</span>{% endif %}</div>
+                        <div class="muted" style="font-size: 13px;">
+                            {{ movie.genres }}
+                            {% if movie.imdb %} · IMDB {{ movie.imdb }}{% endif %}
+                            {% if movie.director %} · {{ movie.director }}{% endif %}
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" data-move="up"   aria-label="Move up">↑</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-move="down" aria-label="Move down">↓</button>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <form method="post" id="ranking-form">
+        {% csrf_token %}
+        <input type="hidden" name="trial_index"     value="{{ trial_index }}">
+        <input type="hidden" name="shown_ids_json"  value="{{ shown_ids_csv }}">
+        <input type="hidden" name="ranked_ids_json" id="ranked_ids_json" value="">
+        <input type="hidden" name="response_ms"     id="response_ms" value="">
+        <button type="submit" class="btn">Submit ranking →</button>
+    </form>
+
+</div>
+
+<script>
+(function() {
+    const start = performance.now();
+    const list  = document.getElementById('ranking-list');
+
+    function renumber() {
+        [...list.children].forEach((li, i) => {
+            li.querySelector('[data-rank]').textContent = (i + 1) + '.';
+        });
+    }
+    function collectIds() {
+        return [...list.children].map(li => li.dataset.id).join(',');
+    }
+
+    list.addEventListener('click', (ev) => {
+        const b = ev.target.closest('button[data-move]');
+        if (!b) return;
+        const li = b.closest('li');
+        if (b.dataset.move === 'up' && li.previousElementSibling) {
+            list.insertBefore(li, li.previousElementSibling);
+        } else if (b.dataset.move === 'down' && li.nextElementSibling) {
+            list.insertBefore(li.nextElementSibling, li);
+        }
+        renumber();
+    });
+
+    document.getElementById('ranking-form').addEventListener('submit', () => {
+        document.getElementById('ranked_ids_json').value = collectIds();
+        document.getElementById('response_ms').value =
+            Math.round(performance.now() - start);
+    });
+})();
+</script>
+{% endblock %}
